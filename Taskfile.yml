@@ -1,0 +1,72 @@
+version: '3'
+
+tasks:
+  build:
+    desc: "Build all services"
+    cmds:
+      - task: build:user
+      - task: build:product
+      - task: build:order
+      - task: build:inventory
+      - task: build:payment
+      - task: build:notification
+
+  build:user:
+    desc: "Build user-service"
+    cmds:
+      - go build -o bin/user-service ./services/user-service/cmd
+
+  build:product:
+    desc: "Build product-service"
+    cmds:
+      - go build -o bin/product-service ./services/product-service/cmd
+
+  build:order:
+    desc: "Build order-service"
+    cmds:
+      - go build -o bin/order-service ./services/order-service/cmd
+
+  build:inventory:
+    desc: "Build inventory-service"
+    cmds:
+      - go build -o bin/inventory-service ./services/inventory-service/cmd
+
+  build:payment:
+    desc: "Build payment-service"
+    cmds:
+      - go build -o bin/payment-service ./services/payment-service/cmd
+
+  build:notification:
+    desc: "Build notification-service"
+    cmds:
+      - go build -o bin/notification-service ./services/notification-service/cmd
+
+  run:
+    desc: "Run all services using docker-compose"
+    cmds:
+      - docker-compose -f docker-compose.base.yml -f docker-compose.yml up
+
+  test:
+    desc: "Run all tests"
+    cmds:
+      - go test ./...
+
+  deps:
+    desc: "Install dependencies"
+    cmds:
+      - go mod tidy
+
+  lint:
+    desc: "Run linter"
+    cmds:
+      - golangci-lint run
+
+  clean:
+    desc: "Remove build artifacts"
+    cmds:
+      - rm -rf bin
+
+  docker-build:
+    desc: "Build all docker images"
+    cmds:
+      - docker-compose build

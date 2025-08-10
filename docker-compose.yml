@@ -1,0 +1,100 @@
+version: '3.8'
+
+# To use with base services, run:
+#   docker-compose -f docker-compose.base.yml -f docker-compose.yml up
+
+services:
+  # Services
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      DATABASE_URL: postgres://postgres:password@postgres:5432/ecommerce?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:9092
+      JWT_SECRET: your-secret-key
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+
+  product-service:
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
+    ports:
+      - "8082:8080"
+    environment:
+      MONGODB_URL: mongodb://admin:password@mongodb:27017
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      - mongodb
+      - kafka
+
+  order-service:
+    build:
+      context: .
+      dockerfile: services/order-service/Dockerfile
+    ports:
+      - "8083:8080"
+    environment:
+      DATABASE_URL: postgres://postgres:password@postgres:5432/ecommerce?sslmode=disable
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: services/inventory-service/Dockerfile
+    ports:
+      - "8084:8080"
+    environment:
+      CASSANDRA_HOSTS: cassandra:9042
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      - cassandra
+      - kafka
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    ports:
+      - "8085:8080"
+    environment:
+      DATABASE_URL: postgres://postgres:password@postgres:5432/ecommerce?sslmode=disable
+      KAFKA_BROKERS: kafka:9092
+      STRIPE_SECRET_KEY: your-stripe-secret-key
+    depends_on:
+      - postgres
+      - kafka
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    ports:
+      - "8086:8080"
+    environment:
+      MONGODB_URL: mongodb://admin:password@mongodb:27017
+      KAFKA_BROKERS: kafka:9092
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USERNAME: your-email@gmail.com
+      SMTP_PASSWORD: your-app-password
+    depends_on:
+      - mongodb
+      - kafka
+
+volumes:
+  postgres_data:
+  redis_data:
+  mongodb_data:
+  cassandra_data:
+  prometheus_data:
+  grafana_data:

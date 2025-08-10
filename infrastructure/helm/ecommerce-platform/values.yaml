@@ -1,0 +1,195 @@
+# Global configuration
+global:
+  imageRegistry: your-registry.com
+  imagePullSecrets:
+    - name: registry-secret
+
+# User Service
+userService:
+  image:
+    repository: user-service
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  replicaCount: 3
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+  env:
+    CASSANDRA_HOSTS: "cassandra:9042"
+    KAFKA_BROKERS: "kafka:9092"
+
+# Payment Service
+paymentService:
+  image:
+    repository: payment-service
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  replicaCount: 3
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+  env:
+    DATABASE_URL: "postgres://user:pass@postgresql:5432/ecommerce"
+    KAFKA_BROKERS: "kafka:9092"
+    STRIPE_SECRET_KEY: "your-stripe-secret-key"
+
+# Notification Service
+notificationService:
+  image:
+    repository: notification-service
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  replicaCount: 2
+  
+  resources:
+    limits:
+      cpu: 300m
+      memory: 256Mi
+    requests:
+      cpu: 150m
+      memory: 128Mi
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+  env:
+    MONGODB_URL: "mongodb://admin:password@mongodb:27017"
+    KAFKA_BROKERS: "kafka:9092"
+    SMTP_HOST: "smtp.gmail.com"
+    SMTP_PORT: "587"
+
+# Ingress
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+  hosts:
+    - host: api.ecommerce.com
+      paths:
+        - path: /users(/|$)(.*)
+          pathType: Prefix
+          service:
+            name: user-service
+            port: 80
+        - path: /products(/|$)(.*)
+          pathType: Prefix
+          service:
+            name: product-service
+            port: 80
+        - path: /orders(/|$)(.*)
+          pathType: Prefix
+          service:
+            name: order-service
+            port: 80
+        - path: /inventory(/|$)(.*)
+          pathType: Prefix
+          service:
+            name: inventory-service
+            port: 80
+        - path: /payments(/|$)(.*)
+          pathType: Prefix
+          service:
+            name: payment-service
+            port: 80
+        - path: /notifications(/|$)(.*)
+          pathType: Prefix
+          service:
+            name: notification-service
+            port: 80
+  tls:
+    - secretName: ecommerce-tls
+      hosts:
+        - api.ecommerce.com
+
+# Database configurations
+postgresql:
+  auth:
+    postgresPassword: "postgres-password"
+    database: "ecommerce"
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+
+redis:
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+
+mongodb:
+  auth:
+    rootPassword: "mongodb-password"
+  persistence:
+    enabled: true
+    size: 8Gi
+
+kafka:
+  auth:
+    clientProtocol: plaintext
+  persistence:
+    enabled: true
+    size: 8Gi
+
+# Monitoring
+prometheus:
+  server:
+    persistentVolume:
+      size: 8Gi
+    service:
+      type: ClusterIP
+  
+grafana:
+  adminPassword: "grafana-admin-password"
+  persistence:
+    enabled: true
+    size: 1Gi
